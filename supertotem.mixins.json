@@ -1,0 +1,8 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.supertotem.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": ["LivingEntityTotemMixin", "LivingEntityFallMixin", "EnderPearlDamageMixin", "LivingEntityDamageMixin"],
+  "injectors": { "defaultRequire": 1 }
+}

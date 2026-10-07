@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "id": "supertotem",
+  "version": "${version}",
+  "name": "Totem Astraeus",
+  "description": "Anade el Totem Astraeus y avisos en el chat cuando alguien usa un totem.",
+  "environment": "*",
+  "entrypoints": { "main": ["com.supertotem.SuperTotemMod"] },
+  "mixins": ["supertotem.mixins.json"],
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "minecraft": "~1.21.4",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}

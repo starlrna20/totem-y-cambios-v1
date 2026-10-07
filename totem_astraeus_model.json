@@ -1,0 +1,1 @@
+{ "parent": "minecraft:item/generated", "textures": { "layer0": "totem_astraeus:item/totem_astraeus" } }
