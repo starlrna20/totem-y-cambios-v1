@@ -46,7 +46,8 @@ public final class ExtraRules {
                 if (!p.isAlive() || p.isSpectator()) continue;
 
                 if (day >= 10) keepFireBurning(p);
-                if (day >= 20) p.removeEffect(MobEffects.FIRE_RESISTANCE);
+                // Dia 20+: si estas envuelto en fuego (o en lava), Fire Resistance se elimina. Fuera del fuego se conserva.
+                if (day >= 20 && (p.isOnFire() || p.isInLava())) p.removeEffect(MobEffects.FIRE_RESISTANCE);
                 if (day >= 10 && everyTwo && !p.isCreative() && touchesMagma(p)) killByMagma(p);
 
                 if (everySecond) {
