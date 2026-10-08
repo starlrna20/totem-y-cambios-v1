@@ -24,7 +24,7 @@ import java.util.List;
 /** Reglas extra de Permadeath por dia (fuego eterno, magma, techo del nether, phantoms, tropiezos). */
 public final class ExtraRules {
     /** Probabilidad de tropezar, comprobada 1 vez por segundo mientras corres: 0,5 %. */
-    public static final double TRIP_CHANCE = 0.015;
+    public static final double TRIP_CHANCE = 0.005;
     /** Dano del tropiezo (1.0 = medio corazon). */
     public static final float TRIP_DAMAGE = 1.0F;
     /** Altura a partir de la cual estas "encima del techo" del Nether. */

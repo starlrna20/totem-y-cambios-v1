@@ -3,9 +3,12 @@
   "id": "supertotem",
   "version": "${version}",
   "name": "Totem Astraeus",
-  "description": "Anade el Totem Astraeus y avisos en el chat cuando alguien usa un totem.",
+  "description": "Anade el Totem Astraeus, avisos y colores al usar totems, y reglas por dia de Permadeath.",
   "environment": "*",
-  "entrypoints": { "main": ["com.supertotem.SuperTotemMod"] },
+  "entrypoints": {
+    "main": ["com.supertotem.SuperTotemMod"],
+    "client": ["com.supertotem.client.SuperTotemClient"]
+  },
   "mixins": ["supertotem.mixins.json"],
   "depends": {
     "fabricloader": ">=0.16.0",

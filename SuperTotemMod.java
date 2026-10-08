@@ -4,6 +4,7 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.core.component.DataComponents;
@@ -80,6 +81,9 @@ public class SuperTotemMod implements ModInitializer {
                     evoker.getX(), evoker.getY(), evoker.getZ(), new ItemStack(SUPREME_TOTEM)));
             LOGGER.info("El evoker solto un Totem Astraeus");
         });
+
+        // --- Mensaje servidor -> cliente para el color de las particulas del totem ---
+        PayloadTypeRegistry.playS2C().register(TotemColorPayload.TYPE, TotemColorPayload.CODEC);
 
         // --- Reglas extra por dia de Permadeath (fuego, magma, techo del nether, phantoms, tropiezos) ---
         ExtraRules.register();

@@ -4,5 +4,6 @@
   "package": "com.supertotem.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": ["LivingEntityTotemMixin", "LivingEntityFallMixin", "EnderPearlDamageMixin", "LivingEntityDamageMixin"],
+  "client": ["TotemParticleMixin"],
   "injectors": { "defaultRequire": 1 }
 }
