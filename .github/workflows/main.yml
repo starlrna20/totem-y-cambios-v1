@@ -24,24 +24,12 @@ jobs:
           mv totem_astraeus.png src/main/resources/assets/totem_astraeus/textures/item/
           mv totem_astraeus_item.json src/main/resources/assets/totem_astraeus/items/totem_astraeus.json
           mv totem_astraeus_model.json src/main/resources/assets/totem_astraeus/models/item/totem_astraeus.json
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 21
-      - uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: 8.12
-      - run: gradle build
-      - name: Renombrar jar
-        run: |
-          mkdir out
-          for f in build/libs/*.jar; do
-            case "$f" in
-              *-sources.jar|*-dev.jar) ;;
-              *) cp "$f" out/TotemAstraeusv3.jar ;;
-            esac
+          # Archivos cuyo nombre lleva "__": cada "__" es una carpeta (ej. assets__x__items__a.json -> assets/x/items/a.json)
+          for f in *__*; do
+            [ -e "$f" ] || continue
+            dest="src/main/resources/$(echo "$f" | sed 's#__#/#g')"
+            mkdir -p "$(dirname "$dest")"
+            mv "$f" "$dest"
           done
-      - uses: actions/upload-artifact@v4
-        with:
-          name: TotemAstraeusv3
-          path: out/TotemAstraeusv3.jar
+          rm -f flashbang.png
+      -
