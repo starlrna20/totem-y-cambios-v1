@@ -26,7 +26,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 
 /**
- * Flashbang: delgado, vida 4.0 (2 corazones), Velocidad III infinita, rango de vision x2 (70 vs 35 del zombie),
+ * Flashbang: delgado, vida 4.0 (2 corazones), Velocidad V infinita, rango de vision x2 (70 vs 35 del zombie),
  * hitbox de creeper. Explota al instante al tocar a su objetivo y deja la pantalla en blanco.
  */
 public class FlashbangEntity extends Monster {
@@ -77,10 +77,11 @@ public class FlashbangEntity extends Monster {
         super.tick();
         if (this.level().isClientSide || this.isRemoved()) return;
 
-        // Velocidad III infinita
-        if (!this.hasEffect(MobEffects.MOVEMENT_SPEED)) {
+        // Velocidad V infinita (amplificador 4)
+        MobEffectInstance speed = this.getEffect(MobEffects.MOVEMENT_SPEED);
+        if (speed == null || speed.getAmplifier() != 4) {
             this.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED,
-                    MobEffectInstance.INFINITE_DURATION, 2, false, false));
+                    MobEffectInstance.INFINITE_DURATION, 4, false, false));
         }
 
         LivingEntity target = this.getTarget();

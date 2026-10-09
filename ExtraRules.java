@@ -64,7 +64,7 @@ public final class ExtraRules {
 
                 if (everyTwo && !p.isCreative()) {
                     if (day >= 10 && touchesMagma(p)) killThroughTotem(p);
-                    else if (day >= 40 && standsOnPressurePlate(p)) killThroughTotem(p);
+                    else if (day >= 40 && standsOnPressurePlate(p)) killByTrigger(p);
                 }
 
                 if (everySecond) {
@@ -111,7 +111,7 @@ public final class ExtraRules {
             BlockState state = level.getBlockState(hitResult.getBlockPos());
             if (state.is(BlockTags.DOORS) || state.is(BlockTags.TRAPDOORS) || state.is(BlockTags.FENCE_GATES)
                     || state.is(BlockTags.BUTTONS) || state.is(Blocks.LEVER)) {
-                killThroughTotem(sp);
+                killByTrigger(sp);
             }
             return InteractionResult.PASS;
         });
@@ -158,6 +158,20 @@ public final class ExtraRules {
         DamageRules.suppressed = true;
         try {
             p.hurtServer(level, level.damageSources().hotFloor(), 1000.0F);
+        } finally {
+            DamageRules.suppressed = false;
+        }
+    }
+
+    /**
+     * Puertas, trampillas, palancas, botones y placas: igual de letal que el magma y tambien pasa por el totem,
+     * pero con dano generico (NO de fuego), asi que Fire Resistance no protege.
+     */
+    private static void killByTrigger(ServerPlayer p) {
+        ServerLevel level = p.serverLevel();
+        DamageRules.suppressed = true;
+        try {
+            p.hurtServer(level, level.damageSources().generic(), 1000.0F);
         } finally {
             DamageRules.suppressed = false;
         }

@@ -14,8 +14,8 @@ public final class DamageRules {
 
     public static float multiplier(DamageSource src) {
         if (suppressed) return 1.0F;
-        // La explosion de un Flashbang hace el doble de dano que un creeper
-        if (src.getDirectEntity() instanceof FlashbangEntity) return 2.0F;
+        // La explosion de un Flashbang hace 1/3 de su dano anterior (que era el doble de un creeper): 2/3 de un creeper
+        if (src.getDirectEntity() instanceof FlashbangEntity) return 2.0F / 3.0F;
 
         long day = PermadeathDays.day();
 

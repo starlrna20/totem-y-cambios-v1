@@ -3,6 +3,7 @@ package com.supertotem;
 import com.supertotem.entity.FlashbangEntity;
 import net.fabricmc.fabric.api.biome.v1.BiomeModifications;
 import net.fabricmc.fabric.api.biome.v1.BiomeSelectors;
+import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
@@ -17,6 +18,9 @@ import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.SpawnPlacementTypes;
 import net.minecraft.world.entity.SpawnPlacements;
 import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.item.CreativeModeTabs;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.levelgen.Heightmap;
@@ -26,6 +30,7 @@ public final class ModEntities {
             ResourceLocation.fromNamespaceAndPath(SuperTotemMod.MOD_ID, "flashbang"));
 
     public static EntityType<FlashbangEntity> FLASHBANG;
+    public static Item FLASHBANG_SPAWN_EGG;
 
     private ModEntities() {}
 
@@ -43,6 +48,14 @@ public final class ModEntities {
 
         // Se anade a todos los biomas (overworld, nether, end, The Beginning...); canSpawn decide cuando.
         BiomeModifications.addSpawn(BiomeSelectors.all(), MobCategory.MONSTER, FLASHBANG, 30, 1, 1);
+
+        // Huevo generador (aparece en la pestana de huevos del creativo)
+        ResourceKey<Item> eggKey = ResourceKey.create(Registries.ITEM,
+                ResourceLocation.fromNamespaceAndPath(SuperTotemMod.MOD_ID, "flashbang_spawn_egg"));
+        FLASHBANG_SPAWN_EGG = Registry.register(BuiltInRegistries.ITEM, eggKey,
+                new SpawnEggItem(FLASHBANG, new Item.Properties().setId(eggKey)));
+        ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.SPAWN_EGGS)
+                .register(entries -> entries.accept(FLASHBANG_SPAWN_EGG));
     }
 
     /** Dia 20-49: solo Overworld. Dia 50+: cualquier dimension (incluida The Beginning). */
