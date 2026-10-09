@@ -1,0 +1,28 @@
+#!/bin/bash
+set -e
+# Los .java se colocan solos segun su linea "package ..."
+for f in *.java; do
+  pkg=$(grep -m1 '^package ' "$f" | tr -d '\r' | sed 's/package \(.*\);.*/\1/' | tr '.' '/')
+  mkdir -p "src/main/java/$pkg"
+  mv "$f" "src/main/java/$pkg/"
+done
+
+mkdir -p src/main/resources/assets/totem_astraeus/items
+mkdir -p src/main/resources/assets/totem_astraeus/models/item
+mkdir -p src/main/resources/assets/totem_astraeus/textures/item
+mkdir -p src/main/resources/assets/totem_astraeus/lang
+mv fabric.mod.json supertotem.mixins.json src/main/resources/
+mv en_us.json es_es.json src/main/resources/assets/totem_astraeus/lang/
+mv totem_astraeus.png src/main/resources/assets/totem_astraeus/textures/item/
+mv totem_astraeus_item.json src/main/resources/assets/totem_astraeus/items/totem_astraeus.json
+mv totem_astraeus_model.json src/main/resources/assets/totem_astraeus/models/item/totem_astraeus.json
+
+# Archivos cuyo nombre lleva "__": cada "__" es una carpeta
+for f in *__*; do
+  [ -e "$f" ] || continue
+  dest="src/main/resources/$(echo "$f" | sed 's#__#/#g')"
+  mkdir -p "$(dirname "$dest")"
+  mv "$f" "$dest"
+done
+
+rm -f flashbang.png
