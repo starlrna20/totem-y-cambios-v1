@@ -35,7 +35,7 @@ public class FlashbangEntity extends Monster {
     /** Potencia de explosion = la de un creeper. El dano x2 se aplica en DamageRules. */
     public static final float EXPLOSION_POWER = 3.0F;
     /** Radio (bloques) en el que los jugadores ven el destello blanco. */
-    public static final double FLASH_RADIUS = 24.0;
+    public static final double FLASH_RADIUS = 12.0;
 
     private static final EntityDataAccessor<Boolean> ARMS_UP =
             SynchedEntityData.defineId(FlashbangEntity.class, EntityDataSerializers.BOOLEAN);
@@ -46,8 +46,8 @@ public class FlashbangEntity extends Monster {
 
     public static AttributeSupplier.Builder createAttributes() {
         return Monster.createMonsterAttributes()
-                .add(Attributes.MAX_HEALTH, 4.0)
-                .add(Attributes.MOVEMENT_SPEED, 0.25)
+                .add(Attributes.MAX_HEALTH, 8.0)
+                .add(Attributes.MOVEMENT_SPEED, 0.50)
                 .add(Attributes.FOLLOW_RANGE, 70.0);
     }
 
