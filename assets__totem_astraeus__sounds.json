@@ -1,0 +1,7 @@
+{
+  "flashbang_ring": {
+    "sounds": [
+      { "name": "totem_astraeus:flashbang_ring", "volume": 0.8, "stream": false }
+    ]
+  }
+}
