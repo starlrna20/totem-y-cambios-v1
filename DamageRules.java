@@ -1,5 +1,6 @@
 package com.supertotem;
 
+import com.supertotem.entity.FlashbangEntity;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
@@ -13,6 +14,9 @@ public final class DamageRules {
 
     public static float multiplier(DamageSource src) {
         if (suppressed) return 1.0F;
+        // La explosion de un Flashbang hace el doble de dano que un creeper
+        if (src.getDirectEntity() instanceof FlashbangEntity) return 2.0F;
+
         long day = PermadeathDays.day();
 
         // Dia 20+: cualquier dano de fuego (fuego, lava, blaze, bolas de fuego...) x4

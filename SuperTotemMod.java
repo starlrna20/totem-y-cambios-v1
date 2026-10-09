@@ -84,6 +84,10 @@ public class SuperTotemMod implements ModInitializer {
 
         // --- Mensaje servidor -> cliente para el color de las particulas del totem ---
         PayloadTypeRegistry.playS2C().register(TotemColorPayload.TYPE, TotemColorPayload.CODEC);
+        PayloadTypeRegistry.playS2C().register(FlashPayload.TYPE, FlashPayload.CODEC);
+
+        // --- Mob nuevo: Flashbang ---
+        ModEntities.register();
 
         // --- Reglas extra por dia de Permadeath (fuego, magma, techo del nether, phantoms, tropiezos) ---
         ExtraRules.register();

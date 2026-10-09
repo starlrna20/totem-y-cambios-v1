@@ -1,1 +1,4 @@
-{ "item.totem_astraeus.totem_astraeus": "Totem Astraeus" }
+{
+  "item.totem_astraeus.totem_astraeus": "Totem Astraeus",
+  "entity.totem_astraeus.flashbang": "Flashbang"
+}

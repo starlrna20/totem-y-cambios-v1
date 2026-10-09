@@ -3,25 +3,37 @@ package com.supertotem;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
+import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.FluidTags;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.monster.CaveSpider;
 import net.minecraft.world.entity.monster.Phantom;
+import net.minecraft.world.entity.monster.Spider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/** Reglas extra de Permadeath por dia (fuego eterno, magma, techo del nether, phantoms, tropiezos). */
+/** Reglas extra por dia de Permadeath. */
 public final class ExtraRules {
     /** Probabilidad de tropezar, comprobada 1 vez por segundo mientras corres: 0,5 %. */
     public static final double TRIP_CHANCE = 0.005;
@@ -45,10 +57,15 @@ public final class ExtraRules {
             for (ServerPlayer p : server.getPlayerList().getPlayers()) {
                 if (!p.isAlive() || p.isSpectator()) continue;
 
+                // Dia 10+: fuego eterno (solo se apaga con agua / pocion splash de agua)
                 if (day >= 10) keepFireBurning(p);
-                // Dia 20+: si estas envuelto en fuego (o en lava), Fire Resistance se elimina. Fuera del fuego se conserva.
+                // Dia 20+: si estas envuelto en fuego (o en lava), Fire Resistance se elimina
                 if (day >= 20 && (p.isOnFire() || p.isInLava())) p.removeEffect(MobEffects.FIRE_RESISTANCE);
-                if (day >= 10 && everyTwo && !p.isCreative() && touchesMagma(p)) killByMagma(p);
+
+                if (everyTwo && !p.isCreative()) {
+                    if (day >= 10 && touchesMagma(p)) killThroughTotem(p);
+                    else if (day >= 40 && standsOnPressurePlate(p)) killThroughTotem(p);
+                }
 
                 if (everySecond) {
                     netherRoofDarkness(p, day);
@@ -61,21 +78,58 @@ public final class ExtraRules {
         PlayerBlockBreakEvents.BEFORE.register((level, player, pos, state, blockEntity) -> {
             if (state.is(Blocks.MAGMA_BLOCK) && player instanceof ServerPlayer sp
                     && PermadeathDays.day() >= 30 && !sp.isCreative() && !sp.isSpectator()) {
-                killByMagma(sp);
+                killThroughTotem(sp);
             }
             return true;
         });
 
-        // --- Dia 10+: un phantom que te golpea te revuelve el inventario ---
+        // --- Dia 20+: romper una telarana con espada o tijeras suelta una araña de cueva (no en agua) ---
+        PlayerBlockBreakEvents.AFTER.register((level, player, pos, state, blockEntity) -> {
+            if (!(level instanceof ServerLevel server) || !state.is(Blocks.COBWEB)) return;
+            if (PermadeathDays.day() < 20) return;
+            ItemStack tool = player.getMainHandItem();
+            if (!(tool.is(ItemTags.SWORDS) || tool.is(Items.SHEARS))) return;
+            if (player.isInWater() || waterNear(server, pos)) return;
+
+            CaveSpider spider = EntityType.CAVE_SPIDER.create(server, EntitySpawnReason.TRIGGERED);
+            if (spider != null) {
+                spider.moveTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, server.random.nextFloat() * 360.0F, 0.0F);
+                server.addFreshEntity(spider);
+            }
+        });
+
+        // --- Dia 40+: usar puertas, trampillas, puertas de valla, palancas y botones mata (antes gasta totem) ---
+        UseBlockCallback.EVENT.register((player, level, hand, hitResult) -> {
+            if (level.isClientSide || hand != InteractionHand.MAIN_HAND) return InteractionResult.PASS;
+            if (!(player instanceof ServerPlayer sp) || sp.isCreative() || sp.isSpectator()) return InteractionResult.PASS;
+            if (PermadeathDays.day() < 40) return InteractionResult.PASS;
+
+            // Igual que el juego: agachado con algo en las manos NO interactua con el bloque
+            boolean hasItem = !sp.getMainHandItem().isEmpty() || !sp.getOffhandItem().isEmpty();
+            if (sp.isSecondaryUseActive() && hasItem) return InteractionResult.PASS;
+
+            BlockState state = level.getBlockState(hitResult.getBlockPos());
+            if (state.is(BlockTags.DOORS) || state.is(BlockTags.TRAPDOORS) || state.is(BlockTags.FENCE_GATES)
+                    || state.is(BlockTags.BUTTONS) || state.is(Blocks.LEVER)) {
+                killThroughTotem(sp);
+            }
+            return InteractionResult.PASS;
+        });
+
+        // --- Cuando un jugador recibe dano de un ser vivo concreto ---
         ServerLivingEntityEvents.AFTER_DAMAGE.register((entity, source, baseDamageTaken, damageTaken, blocked) -> {
             if (blocked || !(entity instanceof ServerPlayer p)) return;
-            if (!(source.getEntity() instanceof Phantom)) return;
-            if (PermadeathDays.day() < 10) return;
-            shuffleInventory(p);
+            long day = PermadeathDays.day();
+
+            // Dia 10+: un phantom que te golpea te revuelve el inventario
+            if (day >= 10 && source.getEntity() instanceof Phantom) shuffleInventory(p);
+
+            // Dia 20+: cualquier arana que te golpea deja una telarana (no en agua)
+            if (day >= 20 && source.getEntity() instanceof Spider) placeCobweb(p);
         });
     }
 
-    // ---------- Fuego eterno (dia 10 en adelante): solo se apaga con agua / pocion splash de agua ----------
+    // ---------- Fuego eterno ----------
     private static void keepFireBurning(ServerPlayer p) {
         int f = p.getRemainingFireTicks();
         if (f > 0 && f <= 5) p.setRemainingFireTicks(205);
@@ -93,8 +147,13 @@ public final class ExtraRules {
         return false;
     }
 
+    // ---------- Placas de presion (dia 40+): pisar cualquier placa mata ----------
+    private static boolean standsOnPressurePlate(ServerPlayer p) {
+        return p.serverLevel().getBlockState(p.blockPosition()).is(BlockTags.PRESSURE_PLATES);
+    }
+
     /** Dano enorme, pero normal (no se salta el totem): si tienes totem te salva, si no, mueres. */
-    private static void killByMagma(ServerPlayer p) {
+    private static void killThroughTotem(ServerPlayer p) {
         ServerLevel level = p.serverLevel();
         DamageRules.suppressed = true;
         try {
@@ -102,6 +161,25 @@ public final class ExtraRules {
         } finally {
             DamageRules.suppressed = false;
         }
+    }
+
+    // ---------- Telaranas ----------
+    private static void placeCobweb(ServerPlayer p) {
+        ServerLevel level = p.serverLevel();
+        BlockPos pos = p.blockPosition();
+        if (p.isInWater() || level.getFluidState(pos).is(FluidTags.WATER)) return;   // excepcion: agua
+        BlockState current = level.getBlockState(pos);
+        if (current.isAir() || current.canBeReplaced()) {
+            level.setBlockAndUpdate(pos, Blocks.COBWEB.defaultBlockState());
+        }
+    }
+
+    private static boolean waterNear(ServerLevel level, BlockPos pos) {
+        if (level.getFluidState(pos).is(FluidTags.WATER)) return true;
+        for (Direction d : Direction.values()) {
+            if (level.getFluidState(pos.relative(d)).is(FluidTags.WATER)) return true;
+        }
+        return false;
     }
 
     // ---------- Techo del Nether (dia 20+): Darkness mientras estes encima ----------
