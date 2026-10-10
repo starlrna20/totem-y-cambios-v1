@@ -1,6 +1,7 @@
 package com.supertotem;
 
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
@@ -18,6 +19,7 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.item.PrimedTnt;
 import net.minecraft.world.entity.monster.CaveSpider;
 import net.minecraft.world.entity.monster.Phantom;
 import net.minecraft.world.entity.monster.Spider;
@@ -116,6 +118,22 @@ public final class ExtraRules {
             return InteractionResult.PASS;
         });
 
+        // --- TNT de los shulkers de Permadeath: dano x20 (ver DamageRules).
+        //     Bala del shulker: explota al instante. Muerte del shulker: tiempo vanilla (80 ticks = 4 s). ---
+        ServerEntityEvents.ENTITY_LOAD.register((entity, world) -> {
+            if (!(entity instanceof PrimedTnt tnt) || tnt.getTags().contains(DamageRules.SHULKER_TNT_TAG)) return;
+            String origin = permadeathShulkerTntOrigin();
+            if (origin == null) return;
+
+            tnt.addTag(DamageRules.SHULKER_TNT_TAG);
+            if (origin.equals("bullet")) {
+                tnt.setFuse(1);    // explota en su primer tick
+            } else {
+                tnt.setFuse(80);   // tiempo de activacion vanilla
+            }
+            SuperTotemMod.LOGGER.info("TNT de shulker de Permadeath detectado (origen: {}), dano x20", origin);
+        });
+
         // --- Cuando un jugador recibe dano de un ser vivo concreto ---
         ServerLivingEntityEvents.AFTER_DAMAGE.register((entity, source, baseDamageTaken, damageTaken, blocked) -> {
             if (blocked || !(entity instanceof ServerPlayer p)) return;
@@ -127,6 +145,21 @@ public final class ExtraRules {
             // Dia 20+: cualquier arana que te golpea deja una telarana (no en agua)
             if (day >= 20 && source.getEntity() instanceof Spider) placeCobweb(p);
         });
+    }
+
+    /**
+     * El TNT se crea dentro de "addFreshEntity", llamado desde el codigo de Permadeath. Se mira la pila de llamadas
+     * para saber si viene de la bala del shulker (spawnTntOnImpact -> "bullet") o de su muerte
+     * (onShulkerDeath -> "death"). Un TNT puesto por un jugador, un dispensador o el dragon nunca pasa por ahi.
+     * Devuelve null si no es de un shulker de Permadeath.
+     */
+    private static String permadeathShulkerTntOrigin() {
+        return StackWalker.getInstance().walk(frames -> frames
+                .map(StackWalker.StackFrame::getMethodName)
+                .filter(m -> m.contains("spawnTntOnImpact") || m.contains("onShulkerDeath"))
+                .map(m -> m.contains("spawnTntOnImpact") ? "bullet" : "death")
+                .findFirst()
+                .orElse(null));
     }
 
     // ---------- Fuego eterno ----------

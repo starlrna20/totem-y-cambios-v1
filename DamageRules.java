@@ -4,9 +4,13 @@ import com.supertotem.entity.FlashbangEntity;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.item.PrimedTnt;
 
 /** Multiplicadores de dano que recibe un jugador segun el dia de Permadeath. */
 public final class DamageRules {
+    /** Etiqueta que se le pone al TNT creado por los shulkers de Permadeath (la bala al impactar y la muerte del shulker). */
+    public static final String SHULKER_TNT_TAG = "totem_astraeus_shulker_tnt";
+
     /** Se pone en true mientras el propio mod hace dano (magma, tropiezo) para que no se multiplique. */
     public static boolean suppressed = false;
 
@@ -16,6 +20,9 @@ public final class DamageRules {
         if (suppressed) return 1.0F;
         // La explosion de un Flashbang hace 1/3 de su dano anterior (que era el doble de un creeper): 2/3 de un creeper
         if (src.getDirectEntity() instanceof FlashbangEntity) return 2.0F / 3.0F;
+
+        // TNT de los shulkers de Permadeath: dano x20
+        if (src.getDirectEntity() instanceof PrimedTnt tnt && tnt.getTags().contains(SHULKER_TNT_TAG)) return 20.0F;
 
         long day = PermadeathDays.day();
 
